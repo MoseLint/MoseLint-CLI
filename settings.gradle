@@ -1,0 +1,7 @@
+rootProject.name = 'MoseLint-CLI'
+
+include "MoseLintCore"
+include "ProjectCreator"
+
+project(":MoseLintCore").projectDir = file("../MoseLintCore")
+project(":ProjectCreator").projectDir = file("../MoseLintCore/ProjectCreator");
