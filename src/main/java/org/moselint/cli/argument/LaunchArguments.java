@@ -6,8 +6,9 @@ import java.util.List;
 public class LaunchArguments {
 
 	public static final SourceArgument SOURCE = new SourceArgument();
+	public static final DependenciesArgument DEPENDENCIES = new DependenciesArgument();
 
 	public static Collection<LaunchArgument<?>> getLaunchArguments() {
-		return List.of(SOURCE);
+		return List.of(SOURCE, DEPENDENCIES);
 	}
 }

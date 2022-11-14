@@ -7,18 +7,21 @@ import org.moselint.cli.argument.LaunchArgument;
 import org.moselint.cli.argument.LaunchArguments;
 import org.moselint.exception.CheckException;
 import org.moselint.exception.CheckExceptionContext;
+import org.openblock.creator.OpenBlockCreator;
 import org.openblock.creator.code.Codeable;
 import org.openblock.creator.impl.custom.clazz.AbstractCustomClass;
 import org.openblock.creator.impl.custom.clazz.reader.CustomClassReader;
 import org.openblock.creator.project.Project;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.IntFunction;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 public class CliMain {
@@ -48,6 +51,33 @@ public class CliMain {
 					"'");
 			return;
 		}
+
+		File[] dependencies = LaunchArguments.DEPENDENCIES.getValue().orElse(new File[0]);
+		URLClassLoader urlClassLoader = new URLClassLoader(Arrays.stream(dependencies).map(file -> {
+			try {
+				return file.toURI().toURL();
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+		}).toArray(URL[]::new), CliMain.class.getClassLoader());
+		System.out.println("Reading dependencies from " + dependencies.length + " files");
+		for(File dependency : dependencies){
+			JarFile jar = new JarFile(dependency);
+			jar.stream().filter(entry -> entry.getName().endsWith(".class")).forEach(entry -> {
+				String name = entry.getName();
+				name = name.substring(0, name.length() - 6);
+				name = name.replaceAll("/", ".");
+				try {
+					urlClassLoader.loadClass(name);
+					System.out.println("Loaded: " + name);
+					Class<?> clazz = Class.forName(name);
+					System.out.println("\tFully loaded: " + clazz.getName());
+				} catch (ClassNotFoundException | NoClassDefFoundError e) {
+					System.err.println("Could not load class: " + e.getMessage());
+				}
+			});
+		}
+		OpenBlockCreator.registerDependingClassLoader(urlClassLoader);
 
 		File source = LaunchArguments.SOURCE.getValue().get();
 
