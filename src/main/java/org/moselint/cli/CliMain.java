@@ -149,7 +149,7 @@ public class CliMain {
 				}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		Map<CustomClassReader, AbstractCustomClass> classesStageThree =
-				classesStageTwo.entrySet().parallelStream().map(entry -> {
+				classesStageTwo.entrySet().stream().sorted(Comparator.comparing(entry -> ((Map.Entry<CustomClassReader, AbstractCustomClass>)entry).getValue().getName())).map(entry -> {
 					AbstractCustomClass acc = entry.getKey().readStageThree(project, entry.getValue());
 					return Map.entry(entry.getKey(), acc);
 				}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
